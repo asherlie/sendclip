@@ -47,7 +47,7 @@ void update_cb(int sock, clipboard_c* c){
       }
 }
 
-void send_clip(char* ip, char* str){
+_Bool send_clip(char* ip, char* str){
       int sock = create_sock(0);
 
       struct sockaddr_in addr;
@@ -60,8 +60,7 @@ void send_clip(char* ip, char* str){
       connect(sock, (struct sockaddr*)&addr, sizeof(struct sockaddr_in));
       
       int len = strlen(str);
-      write(sock, &len, sizeof(int));
-      write(sock, str, strlen(str));
+      return write(sock, &len, sizeof(int)) == sizeof(int) && write(sock, str, len) == len;
 }
 
 /*int main(int a, char** b){*/
