@@ -77,6 +77,9 @@ int main(int a, char** b){
             if(send_clip(b[1], b[2]))printf("succesfully sent \"%s\" to %s\n", b[2], b[1]);
             else puts("failed to send to clipboard");
       }
+      else{
+            printf("usage:\n  %s <ip> <text> - send <text> to <ip>'s clipboard\n  %s             - await connections\n", *b, *b);
+      }
       /*
        *switch(b[1]){
        *      case 's':
