@@ -59,6 +59,8 @@ void send_clip(char* ip, char* str){
 
       connect(sock, (struct sockaddr*)&addr, sizeof(struct sockaddr_in));
       
+      int len = strlen(str);
+      write(sock, &len, sizeof(int));
       write(sock, str, strlen(str));
 }
 
