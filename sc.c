@@ -63,15 +63,31 @@ _Bool send_clip(char* ip, char* str){
       return write(sock, &len, sizeof(int)) == sizeof(int) && write(sock, str, len) == len;
 }
 
-/*int main(int a, char** b){*/
-int main(){
-      clipboard_c* c = clipboard_new(NULL);
+int main(int a, char** b){
+/*int main(){*/
 
-      update_cb(create_sock(1), c);
+      // ./sc <ip> <msg>
+      // ./sc
+
+      if(a == 1){
+            clipboard_c* c = clipboard_new(NULL);
+            update_cb(create_sock(1), c);
+      }
+      else if(a >= 3){
+            if(send_clip(b[1], b[2]))printf("succesfully sent \"%s\" to %s\n", b[2], b[1]);
+            else puts("failed to send to clipboard");
+      }
+      /*
+       *switch(b[1]){
+       *      case 's':
+       *            break;
+       *}
+       */
+      /*update_cb(create_sock(1), c);*/
 
       /*int len;*/
       /*puts(clipboard_text_ex(c, &len, LCB_PRIMARY)); */
       /*clipboard_set_text(c, "hi");*/
       /* clipboard_clear(c, LCB_CLIPBOARD); */
-      clipboard_free(c); 
+      /*clipboard_free(c); */
 }
