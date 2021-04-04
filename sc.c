@@ -4,9 +4,12 @@
 #include <sys/socket.h>
 #include <string.h>
 #include <arpa/inet.h>
-#include <libclipboard.h>
 
 #define PORT 12
+
+#ifdef MAC_OS
+#include <libclipboard.h>
+
 
 void set_block(int sock){
       int fl = fcntl(sock, F_GETFL);
@@ -70,6 +73,8 @@ void update_cb(int sock, clipboard_c* c){
             if((peer = accept(sock, (struct sockaddr*)&addr, &len)) < 0)continue;
 
             int sz = (read(peer, &n_bytes, sizeof(int)));
+            (void)sz;
+            /*if(sz != n_bytes)fprintf(stderr, "failed to read %i bytes\n", n_bytes);*/
             /*fprintf(stderr, "reading %i, %i bytes\n", sz, n_bytes);*/
             char* buf = malloc(n_bytes+1);
 
@@ -94,6 +99,7 @@ void update_cb(int sock, clipboard_c* c){
       }
 }
 
+#endif
 _Bool send_clip(char* ip, char* str){
       /*int sock = create_sock(0, 1);*/
       int sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -133,21 +139,14 @@ int main(int a, char** b){
       // ./sc <ip> <msg>
       // ./sc
 
-      #if 0
-      int test;
-      /*4 bytes, 1011 */
-      /* stored backwards */
-      ((unsigned char*)&test)[0] = 1;
-      ((unsigned char*)&test)[1] = 0;
-      ((unsigned char*)&test)[2] = 0;
-      ((unsigned char*)&test)[3] = 0;
-      fprintf(stderr, "test: %i\n", test);
-      #endif
-      /*return 0;*/
+      #ifdef MAC_OS
       if(a == 1){
             clipboard_c* c = clipboard_new(NULL);
             update_cb(create_sock(1, 0), c);
       }
+      #else
+      if(0){
+      #endif
       else if(a >= 3){
             if(send_clip(b[1], b[2]))fprintf(stderr, "succesfully sent \"%s\" to %s\n", b[2], b[1]);
             else fputs("failed to send to clipboard", stderr);
