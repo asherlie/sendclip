@@ -7,6 +7,22 @@
 
 #define PORT 12
 
+void p_long_str(char* str){
+      int len = strlen(str);
+      if(len > 500){
+            char tmp = str[199];
+            str[199] = 0;
+
+            printf("\"%s\"", str);
+            printf("\n\n<OMITTING %i CHARACTERS>\n\n", len-400);
+
+            /*printf("succesfully sent \"%s...%s\" to %s\n", );*/
+            str[199] = tmp;
+            printf("\"%s\"", str+len-200);
+      }
+      else printf("\"%s\"", str);
+}
+
 #ifdef MAC_OS
 #include <libclipboard.h>
 
@@ -96,7 +112,10 @@ void update_cb(int sock, clipboard_c* c){
 
             buf[n_bytes] = 0;
 
-            printf("set clipboard contents to \"%s\"\n", buf);
+            /*printf("set clipboard contents to \"%s\"\n", buf);*/
+            printf("set clipboard contents to ");
+            p_long_str(buf);
+            puts("");
             clipboard_set_text(c, buf);
 
             free(buf);
@@ -132,22 +151,6 @@ _Bool send_clip(char* ip, char* str){
       printf("wrote %i/%i\n", written, 4+len);
       usleep(1000000);
       return written == (int)sizeof(int)+len;
-}
-
-void p_long_str(char* str){
-      int len = strlen(str);
-      if(len > 500){
-            char tmp = str[199];
-            str[199] = 0;
-
-            printf("\"%s\"", str);
-            printf("\n\n<OMITTING %i CHARACTERS>\n\n", len-400);
-
-            /*printf("succesfully sent \"%s...%s\" to %s\n", );*/
-            str[199] = tmp;
-            printf("\"%s\"", str+len-200);
-      }
-      else printf("\"%s\"", str);
 }
 
 void zp_long_str(char* str){
