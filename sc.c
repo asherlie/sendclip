@@ -76,14 +76,21 @@ void update_cb(int sock, clipboard_c* c){
             /*printf("reading %i, %i bytes\n", sz, n_bytes);*/
             char* buf = malloc(n_bytes+1);
 
-            int cc;
-            if((cc = read(peer, buf, n_bytes)) != n_bytes){
-                  printf("%i != %i\n", cc, n_bytes);
+            int cc = 0;
+
+            for(int i = 0; i < 500; ++i){
+                  cc += read(peer, buf+cc, n_bytes);
+                  if(cc == n_bytes)break;
+            }
+            if(cc != n_bytes){
+            /*if((cc = read(peer, buf, n_bytes)) != n_bytes){*/
+                  printf("attempted to read %i bytes but only received %i\n", n_bytes, cc);
+                  /*printf("%i != %i\n", cc, n_bytes);*/
                   /*puts("read bad bytes");*/
                   free(buf);
                   close(sock);
                   close(peer);
-                  exit(0);
+                  /*exit(0);*/
                   continue;
             }
 
@@ -127,6 +134,38 @@ _Bool send_clip(char* ip, char* str){
       return written == (int)sizeof(int)+len;
 }
 
+void p_long_str(char* str){
+      int len = strlen(str);
+      if(len > 500){
+            char tmp = str[199];
+            str[199] = 0;
+
+            printf("\"%s\"", str);
+            printf("\n\n<OMITTING %i CHARACTERS>\n\n", len-400);
+
+            /*printf("succesfully sent \"%s...%s\" to %s\n", );*/
+            str[199] = tmp;
+            printf("\"%s\"", str+len-200);
+      }
+      else printf("\"%s\"", str);
+}
+
+void zp_long_str(char* str){
+      int len = strlen(str);
+      if(len > 500){
+            char tmp = str[199];
+            str[199] = 0;
+
+
+            /*printf("succesfully sent \"%s...%s\" to %s\n", );*/
+            printf("\"%s...", str);
+            str[199] = tmp;
+            printf("%s\"", str+len-200);
+      }
+      else printf("\"%s\"", str);
+}
+
+
 int main(int a, char** b){
       /*
        *close(STDIN_FILENO);
@@ -147,7 +186,23 @@ int main(int a, char** b){
       }
       #endif
       else if(a >= 3){
-            if(send_clip(b[1], b[2]))printf("succesfully sent \"%s\" to %s\n", b[2], b[1]);
+            if(send_clip(b[1], b[2])){
+                  /*
+                   *int len = strlen(b[2]);
+                   *if(len > 500){
+                   *      char tmp = b[2][199];
+                   *      b[2][199] = 0;
+                   *      [>printf("succesfully sent \"%s...%s\" to %s\n", );<]
+                   *      printf("succesfully sent \"%s...", b[2]);
+                   *      b[2][199] = tmp;
+                   *      printf("%s\"\n", b[2]+len-200);
+                   *}
+                   *else printf("succesfully sent \"%s\" to %s\n", b[2], b[1]);
+                   */
+                  printf("succesfully sent ");
+                  p_long_str(b[2]);
+                  printf(" to %s\n", b[1]);
+            }
             else fputs("failed to send to clipboard", stderr);
       }
       else{
