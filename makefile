@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS= -Wall -Wextra -Wpedantic -Werror -pthread -lclipboard -framework cocoa
+CFLAGS= -Wall -Wextra -Wpedantic -Werror -pthread -lclipboard -framework cocoa -DMAC_OS
 
 all: sc
 
