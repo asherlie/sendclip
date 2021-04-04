@@ -1,45 +1,107 @@
 #include <stdio.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <string.h>
 #include <arpa/inet.h>
 #include <libclipboard.h>
 
-#define PORT 382
+#define PORT 12
+
+void set_block(int sock){
+      int fl = fcntl(sock, F_GETFL);
+      fl |= O_NONBLOCK;
+}
 
 /*  */
-int create_sock(_Bool list){
+int create_sock(_Bool list, _Bool alt_port){
       int sock = socket(AF_INET, SOCK_STREAM, 0);
       struct sockaddr_in addr;
       memset(&addr, 0, sizeof(struct sockaddr_in));
-      addr.sin_port = PORT;
+      addr.sin_port = htons(PORT+alt_port);
+      addr.sin_port = (PORT+alt_port);
+      addr.sin_port = PORT+alt_port;
       addr.sin_family = AF_INET;
+      addr.sin_addr.s_addr = INADDR_ANY;
 
       /*addr.sin_addr.s_addr = inet_addr();*/
-      bind(sock, (struct sockaddr*)&addr, sizeof(struct sockaddr_in));
-      if(list)listen(sock, 0);
+      if(bind(sock, (struct sockaddr*)&addr, sizeof(struct sockaddr_in)) == -1)perror("bind");
+      if(list && listen(sock, 0) == -1)perror("listen()");
+      /*
+       *int enable = 1;
+       *setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int));
+       *setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &enable, sizeof(int));
+       */
+
 
       return sock;
 }
 
+int read_int(int sock){
+      int ret = 0, br = 0, tmp;
+      /* timeout */
+      /*char rret[4];*/
+      for(int i = 0; i < 1000; ++i){
+            /*tmp = read(sock, ((char*)&ret)+br, 4-br);*/
+            tmp = read(sock, ((char*)&ret)+(4-br), 4-br);
+            /*tmp = read(sock, rret+br, 4-br);*/
+            /*if(tmp < 0)continue;*/
+            if(tmp < 0){
+                  perror("read()");
+                  return -1;
+            }
+            br += tmp;
+            fprintf(stderr, "read %i bytes, total %i\n", tmp, br);
+            if(br == sizeof(int))break;
+            usleep(100);
+      }
+      /*fprintf(stderr, "%i, %i, %i, %i\n", rret[0], rret[1], rret[2], rret[3]);*/
+      return ret;
+}
+
 void update_cb(int sock, clipboard_c* c){
-      socklen_t len;
+      socklen_t len = sizeof(struct sockaddr_in);
       struct sockaddr_in addr;
       int peer;
-      int n_bytes;
+      int n_bytes = 0;
+      /*close(STDIN_FILENO);*/
+      /*fprintf(stderr, "FUCK: %i\n", STDIN_FILENO);*/
       while(1){
-            if((peer = accept(sock, (struct sockaddr*)&addr, &len) < 0))continue;
-            if(read(peer, &n_bytes, sizeof(int)) != sizeof(int))continue;
+            if((peer = accept(sock, (struct sockaddr*)&addr, &len)) < 0)continue;
+            char ash[] = "aSher";
+            write(peer, ash, 5);
+            /*fprintf(stderr, "trying to send to socket %i\n"*/
+            fprintf(stderr, "local sock: %i, new peer on socket %i\n", sock, peer);
+            /*fprintf(stderr, "raw read ret: %i\n", (int) recv(peer, &n_bytes, sizeof(int), 0));*/
+            /*fprintf(stderr, "raw read ret: %i\n", (int)read(peer, &n_bytes, sizeof(int)));*/
+            fprintf(stderr, "raw read ret: %i\n", (int)read(sock, &n_bytes, sizeof(int)));
+            /*perror("read()");*/
+            /*fprintf(stderr, "trying to read %i bytes\n", read_int(peer));*/
+            fprintf(stderr, "trying to read %i bytes\n", n_bytes);
+            /*
+             *FILE* fp = fdopen(peer, "rb");
+             *int sz = (int)fread(&n_bytes, 4, 1, fp);
+             */
+            /*if(read(peer, &n_bytes, sizeof(int)) != sizeof(int))continue;*/
+
+            int sz = (read(peer, &n_bytes, sizeof(int)));
+            fprintf(stderr, "reading %i, %i bytes\n", sz, n_bytes);
             char* buf = malloc(n_bytes+1);
 
-            if(read(peer, buf, n_bytes) != n_bytes){
+            int cc;
+            if((cc = read(peer, buf, n_bytes)) != n_bytes){
+                  fprintf(stderr, "%i != %i\n", cc, n_bytes);
+                  /*puts("read bad bytes");*/
                   free(buf);
+                  close(sock);
+                  close(peer);
+                  exit(0);
                   continue;
             }
 
             buf[n_bytes] = 0;
 
-            printf("set clipboard contents to \"%s\"\n", buf);
+            fprintf(stderr, "set clipboard contents to \"%s\"\n", buf);
             clipboard_set_text(c, buf);
 
             free(buf);
@@ -48,37 +110,63 @@ void update_cb(int sock, clipboard_c* c){
 }
 
 _Bool send_clip(char* ip, char* str){
-      int sock = create_sock(0);
+      /*int sock = create_sock(0, 1);*/
+      int sock = socket(AF_INET, SOCK_STREAM, 0);
 
       struct sockaddr_in addr;
       memset(&addr, 0, sizeof(struct sockaddr_in));
 
+      /*(void)ip;*/
       addr.sin_addr.s_addr = inet_addr(ip);
       addr.sin_family = AF_INET;
       addr.sin_port = PORT;
 
-      connect(sock, (struct sockaddr*)&addr, sizeof(struct sockaddr_in));
+      fprintf(stderr, "connect returned %i\n", connect(sock, (struct sockaddr*)&addr, sizeof(struct sockaddr_in)));
+
+      char ash[6] = {0};
+      fprintf(stderr, "was able to read %zi bytes\n", read(sock, ash, 5));
+      fprintf(stderr, "read %s\n", ash);
       
       int len = strlen(str);
-      return write(sock, &len, sizeof(int)) == sizeof(int) && write(sock, str, len) == len;
+      int written = write(sock, &len, sizeof(int));
+      if(written < 0)perror("write()");
+      written += write(sock, str, len);
+      fprintf(stderr, "wrote %i/%i\n", written, 4+len);
+      usleep(1000000);
+      return written == sizeof(int)+len;
 }
 
 int main(int a, char** b){
+      /*
+       *close(STDIN_FILENO);
+       *close(STDOUT_FILENO);
+       */
 /*int main(){*/
 
       // ./sc <ip> <msg>
       // ./sc
 
+      #if 0
+      int test;
+      /*4 bytes, 1011 */
+      /* stored backwards */
+      ((unsigned char*)&test)[0] = 1;
+      ((unsigned char*)&test)[1] = 0;
+      ((unsigned char*)&test)[2] = 0;
+      ((unsigned char*)&test)[3] = 0;
+      fprintf(stderr, "test: %i\n", test);
+      #endif
+      /*return 0;*/
       if(a == 1){
             clipboard_c* c = clipboard_new(NULL);
-            update_cb(create_sock(1), c);
+            update_cb(create_sock(1, 0), c);
       }
       else if(a >= 3){
-            if(send_clip(b[1], b[2]))printf("succesfully sent \"%s\" to %s\n", b[2], b[1]);
-            else puts("failed to send to clipboard");
+            if(send_clip(b[1], b[2]))fprintf(stderr, "succesfully sent \"%s\" to %s\n", b[2], b[1]);
+            else fputs("failed to send to clipboard", stderr);
       }
       else{
-            printf("usage:\n  %s <ip> <text> - send <text> to <ip>'s clipboard\n  %s             - await connections\n", *b, *b);
+            fprintf(stderr, "usage:\n  %s <ip> <text> - send <text> to <ip>'s clipboard\n  %s             - await connections\n", *b, *b);
       }
       /*
        *switch(b[1]){
