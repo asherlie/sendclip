@@ -166,11 +166,44 @@ _Bool send_clip(char* ip, char* str){
       return written == (int)sizeof(int)+len;
 }
 
+#define CONFIG_FILE ".sendclip"
+
+char** parse_cfg_file(char* fn, int* sz){
+      FILE* fp = fopen(fn, "r");
+      if(!fp)return NULL;
+      int cap = 1;
+      char** ret = malloc(sizeof(char*)*cap);
+      char* ln = NULL;
+      size_t lncap = 0;
+      *sz = 0;
+      ssize_t llen;
+      while((llen = getline(&ln, &lncap, fp)) != -1){
+            if(*sz > cap){
+                  cap *= 2;
+                  char** tmp = malloc(sizeof(char*)*cap);
+                  memcpy(tmp, ret, sizeof(char*)*(*sz));
+                  free(ret);
+                  ret = tmp;
+            }
+            /* overwriting \n */
+            ln[llen-1] = 0;
+            puts(ln);
+            ret[(*sz)++] = ln;
+            ln = NULL;
+      }
+      fclose(fp);
+      return ret;
+}
+
+/*writing code to use a config file that specifies a list of ip addresses*/
 int main(int a, char** b){
-      /*
-       *close(STDIN_FILENO);
-       *close(STDOUT_FILENO);
-       */
+      int xx;
+      char* homedir = getenv("HOME");
+      if(homedir){
+            char cfgpath[50] = {0};
+            sprintf(cfgpath, "%s/%s", homedir, CONFIG_FILE);
+            printf("ret: %p\n", (void*)parse_cfg_file(cfgpath, &xx));
+      }
       #ifdef MAC_OS
       if(a == 1){
             clipboard_c* c = (clip = clipboard_new(NULL));
