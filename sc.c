@@ -187,18 +187,6 @@ int main(int a, char** b){
       #endif
       else if(a >= 3){
             if(send_clip(b[1], b[2])){
-                  /*
-                   *int len = strlen(b[2]);
-                   *if(len > 500){
-                   *      char tmp = b[2][199];
-                   *      b[2][199] = 0;
-                   *      [>printf("succesfully sent \"%s...%s\" to %s\n", );<]
-                   *      printf("succesfully sent \"%s...", b[2]);
-                   *      b[2][199] = tmp;
-                   *      printf("%s\"\n", b[2]+len-200);
-                   *}
-                   *else printf("succesfully sent \"%s\" to %s\n", b[2], b[1]);
-                   */
                   printf("succesfully sent ");
                   p_long_str(b[2]);
                   printf(" to %s\n", b[1]);
