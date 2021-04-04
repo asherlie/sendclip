@@ -148,7 +148,9 @@ _Bool send_clip(char* ip, char* str){
       addr.sin_family = AF_INET;
       addr.sin_port = PORT;
 
-      if(connect(sock, (struct sockaddr*)&addr, sizeof(struct sockaddr_in)) == -1)perror("connect()");
+      if(connect(sock, (struct sockaddr*)&addr, sizeof(struct sockaddr_in)) == -1){
+            return 0;
+      }
 
 
       /*char ash[6] = {0};*/
@@ -171,16 +173,17 @@ _Bool send_clip(char* ip, char* str){
 char** parse_cfg_file(char* fn, int* sz){
       FILE* fp = fopen(fn, "r");
       int cap = 1;
-      char** ret = malloc(sizeof(char*)*(cap+1));
+      char** ret = malloc(sizeof(char*)*(cap));
       *sz = 0;
       if(!fp)return ret;
       char* ln = NULL;
       size_t lncap = 0;
       ssize_t llen;
       while((llen = getline(&ln, &lncap, fp)) != -1){
-            if(*sz > cap){
+            /* leaving one extra space for possible stdin arg */
+            if(*sz+1 > cap){
                   cap *= 2;
-                  char** tmp = malloc(sizeof(char*)*(cap+1));
+                  char** tmp = malloc(sizeof(char*)*(cap));
                   memcpy(tmp, ret, sizeof(char*)*(*sz));
                   free(ret);
                   ret = tmp;
@@ -188,8 +191,7 @@ char** parse_cfg_file(char* fn, int* sz){
             /* overwriting \n */
             ln[llen-1] = 0;
             puts(ln);
-            /* writing one past leaving room in [0] */
-            ret[((*sz)++)+1] = ln;
+            ret[((*sz)++)] = ln;
             ln = NULL;
       }
       fclose(fp);
@@ -209,7 +211,7 @@ int main(int a, char** b){
       }
       #endif
       else if(a > 1){
-            int n_targets;
+            int n_targets = 0;
             char* homedir = getenv("HOME"), ** targets = NULL;
             if(!homedir){
                   puts("no HOME directory is set");
@@ -217,22 +219,34 @@ int main(int a, char** b){
                         puts("please provide a recipient");
                         return 1;
                   }
-                  /*targets = malloc(sizeof(char*));*/
-                  n_targets = 0;
-                  targets = &b[2];
+                  targets = malloc(sizeof(char*));
+                  n_targets = 1;
+                  *targets = b[2];
             }
             else{
                   char cfgpath[50] = {0};
                   sprintf(cfgpath, "%s/%s", homedir, CONFIG_FILE);
                   targets = parse_cfg_file(cfgpath, &n_targets);
+                  if(a > 2)targets[n_targets++] = b[2];
             }
+            /**targets = &b[2];*/
             /* first send to b[2] if it exists */
-            if(a > 2 && send_clip(b[1], b[2])){
-                  printf("succesfully sent ");
-                  p_long_str(b[2]);
-                  printf(" to %s\n", b[1]);
+            for(int i = 0; i < n_targets; ++i){
+                  if(send_clip(targets[i], b[1])){
+                        printf("succesfully sent ");
+                        p_long_str(b[1]);
+                        printf(" to %s\n", targets[i]);
+                  }
+                  else printf("failed to send to %s\n", targets[i]);
             }
-            else fputs("failed to send to clipboard", stderr);
+            /*
+             *if(a > 2 && send_clip(b[1], b[2])){
+             *      printf("succesfully sent ");
+             *      p_long_str(b[2]);
+             *      printf(" to %s\n", b[1]);
+             *}
+             */
+            /*else fputs("failed to send to clipboard", stderr);*/
       }
       else{
             printf("usage:\n  %s <ip> <text> - send <text> to <ip>'s clipboard\n  %s             - await connections\n", *b, *b);
