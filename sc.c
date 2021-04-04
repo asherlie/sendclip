@@ -198,6 +198,12 @@ char** parse_cfg_file(char* fn, int* sz){
       return ret;
 }
 
+void p_usage(char** b){
+      printf("usage:\n  %s <text> {ip} - send <text> to {ip}'s clipboard as well as all ip addresses set in config file"
+                   "\n                   | <text> must be provided, {ip} is optional"
+                   "\n  %s             - await connections (mac only)\n", *b, *b);
+}
+
 /*writing code to use a config file that specifies a list of ip addresses*/
 int main(int a, char** b){
       #ifdef MAC_OS
@@ -211,6 +217,7 @@ int main(int a, char** b){
       }
       #endif
       else if(a > 1){
+            p_usage(b);
             int n_targets = 0;
             char* homedir = getenv("HOME"), ** targets = NULL;
             if(!homedir){
@@ -219,6 +226,7 @@ int main(int a, char** b){
                         puts("please provide a recipient");
                         return 1;
                   }
+                  /* if no home directory is set, just use stdin recipient */
                   targets = malloc(sizeof(char*));
                   n_targets = 1;
                   *targets = b[2];
@@ -227,10 +235,10 @@ int main(int a, char** b){
                   char cfgpath[50] = {0};
                   sprintf(cfgpath, "%s/%s", homedir, CONFIG_FILE);
                   targets = parse_cfg_file(cfgpath, &n_targets);
+
+                  /* append stdin recipient to targets, there's a guaranteed space for it */
                   if(a > 2)targets[n_targets++] = b[2];
             }
-            /**targets = &b[2];*/
-            /* first send to b[2] if it exists */
             for(int i = 0; i < n_targets; ++i){
                   if(send_clip(targets[i], b[1])){
                         printf("succesfully sent ");
@@ -239,29 +247,9 @@ int main(int a, char** b){
                   }
                   else printf("failed to send to %s\n", targets[i]);
             }
-            /*
-             *if(a > 2 && send_clip(b[1], b[2])){
-             *      printf("succesfully sent ");
-             *      p_long_str(b[2]);
-             *      printf(" to %s\n", b[1]);
-             *}
-             */
-            /*else fputs("failed to send to clipboard", stderr);*/
+            free(targets);
       }
-      else{
-            printf("usage:\n  %s <ip> <text> - send <text> to <ip>'s clipboard\n  %s             - await connections\n", *b, *b);
-      }
-      /*
-       *switch(b[1]){
-       *      case 's':
-       *            break;
-       *}
-       */
-      /*update_cb(create_sock(1), c);*/
+      else p_usage(b);
 
-      /*int len;*/
-      /*puts(clipboard_text_ex(c, &len, LCB_PRIMARY)); */
-      /*clipboard_set_text(c, "hi");*/
-      /* clipboard_clear(c, LCB_CLIPBOARD); */
-      /*clipboard_free(c); */
+      return 0;
 }
