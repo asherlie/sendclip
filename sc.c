@@ -54,11 +54,11 @@ int read_int(int sock){
                   return -1;
             }
             br += tmp;
-            fprintf(stderr, "read %i bytes, total %i\n", tmp, br);
+            printf("read %i bytes, total %i\n", tmp, br);
             if(br == sizeof(int))break;
             usleep(100);
       }
-      /*fprintf(stderr, "%i, %i, %i, %i\n", rret[0], rret[1], rret[2], rret[3]);*/
+      /*printf("%i, %i, %i, %i\n", rret[0], rret[1], rret[2], rret[3]);*/
       return ret;
 }
 
@@ -67,20 +67,18 @@ void update_cb(int sock, clipboard_c* c){
       struct sockaddr_in addr;
       int peer;
       int n_bytes = 0;
-      /*close(STDIN_FILENO);*/
-      /*fprintf(stderr, "FUCK: %i\n", STDIN_FILENO);*/
       while(1){
             if((peer = accept(sock, (struct sockaddr*)&addr, &len)) < 0)continue;
 
             int sz = (read(peer, &n_bytes, sizeof(int)));
             (void)sz;
-            /*if(sz != n_bytes)fprintf(stderr, "failed to read %i bytes\n", n_bytes);*/
-            /*fprintf(stderr, "reading %i, %i bytes\n", sz, n_bytes);*/
+            /*if(sz != n_bytes)printf("failed to read %i bytes\n", n_bytes);*/
+            /*printf("reading %i, %i bytes\n", sz, n_bytes);*/
             char* buf = malloc(n_bytes+1);
 
             int cc;
             if((cc = read(peer, buf, n_bytes)) != n_bytes){
-                  fprintf(stderr, "%i != %i\n", cc, n_bytes);
+                  printf("%i != %i\n", cc, n_bytes);
                   /*puts("read bad bytes");*/
                   free(buf);
                   close(sock);
@@ -91,7 +89,7 @@ void update_cb(int sock, clipboard_c* c){
 
             buf[n_bytes] = 0;
 
-            fprintf(stderr, "set clipboard contents to \"%s\"\n", buf);
+            printf("set clipboard contents to \"%s\"\n", buf);
             clipboard_set_text(c, buf);
 
             free(buf);
@@ -112,19 +110,19 @@ _Bool send_clip(char* ip, char* str){
       addr.sin_family = AF_INET;
       addr.sin_port = PORT;
 
-      fprintf(stderr, "connect returned %i\n", connect(sock, (struct sockaddr*)&addr, sizeof(struct sockaddr_in)));
+      if(connect(sock, (struct sockaddr*)&addr, sizeof(struct sockaddr_in)) == -1)perror("connect()");
 
       /*char ash[6] = {0};*/
       /*
-       *fprintf(stderr, "was able to read %zi bytes\n", read(sock, ash, 5));
-       *fprintf(stderr, "read %s\n", ash);
+       *printf("was able to read %zi bytes\n", read(sock, ash, 5));
+       *printf("read %s\n", ash);
        */
       
       int len = strlen(str);
       int written = write(sock, &len, sizeof(int));
       if(written < 0)perror("write()");
       written += write(sock, str, len);
-      fprintf(stderr, "wrote %i/%i\n", written, 4+len);
+      printf("wrote %i/%i\n", written, 4+len);
       usleep(1000000);
       return written == (int)sizeof(int)+len;
 }
@@ -149,11 +147,11 @@ int main(int a, char** b){
       }
       #endif
       else if(a >= 3){
-            if(send_clip(b[1], b[2]))fprintf(stderr, "succesfully sent \"%s\" to %s\n", b[2], b[1]);
+            if(send_clip(b[1], b[2]))printf("succesfully sent \"%s\" to %s\n", b[2], b[1]);
             else fputs("failed to send to clipboard", stderr);
       }
       else{
-            fprintf(stderr, "usage:\n  %s <ip> <text> - send <text> to <ip>'s clipboard\n  %s             - await connections\n", *b, *b);
+            printf("usage:\n  %s <ip> <text> - send <text> to <ip>'s clipboard\n  %s             - await connections\n", *b, *b);
       }
       /*
        *switch(b[1]){
