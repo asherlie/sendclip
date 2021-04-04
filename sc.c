@@ -24,6 +24,7 @@ void p_long_str(char* str){
 }
 
 #ifdef MAC_OS
+#include <signal.h>
 #include <libclipboard.h>
 
 
@@ -104,7 +105,7 @@ void update_cb(int sock, clipboard_c* c){
                   /*printf("%i != %i\n", cc, n_bytes);*/
                   /*puts("read bad bytes");*/
                   free(buf);
-                  close(sock);
+                  /*close(sock);*/
                   close(peer);
                   /*exit(0);*/
                   continue;
@@ -123,6 +124,17 @@ void update_cb(int sock, clipboard_c* c){
       }
 }
 
+clipboard_c* clip = NULL;
+int lsock = -1;
+
+void exit_safely(int sig){
+      (void)sig;
+      close(lsock);
+      clipboard_free(clip);
+      puts("\nclosed local socket and freed memory, exiting safely.");
+      exit(0);
+}
+
 #endif
 _Bool send_clip(char* ip, char* str){
       /*int sock = create_sock(0, 1);*/
@@ -137,6 +149,7 @@ _Bool send_clip(char* ip, char* str){
       addr.sin_port = PORT;
 
       if(connect(sock, (struct sockaddr*)&addr, sizeof(struct sockaddr_in)) == -1)perror("connect()");
+
 
       /*char ash[6] = {0};*/
       /*
@@ -160,8 +173,9 @@ int main(int a, char** b){
        */
       #ifdef MAC_OS
       if(a == 1){
-            clipboard_c* c = clipboard_new(NULL);
-            update_cb(create_sock(1, 0), c);
+            clipboard_c* c = (clip = clipboard_new(NULL));
+            signal(SIGINT, exit_safely);
+            update_cb((lsock = create_sock(1, 0)), c);
       }
       #else
       if(0){
