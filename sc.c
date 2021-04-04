@@ -201,7 +201,8 @@ char** parse_cfg_file(char* fn, int* sz){
 void p_usage(char** b){
       printf("usage:\n  %s <text> {ip} - send <text> to {ip}'s clipboard as well as all ip addresses set in config file"
                    "\n                   | <text> must be provided, {ip} is optional"
-                   "\n  %s             - await connections (mac only)\n", *b, *b);
+                   "\n  %s             - await connections (mac only)\n"
+                   "\n  %s -help       - print this usage information\n", *b, *b, *b);
 }
 
 /*writing code to use a config file that specifies a list of ip addresses*/
@@ -217,7 +218,10 @@ int main(int a, char** b){
       }
       #endif
       else if(a > 1){
-            p_usage(b);
+            if(b[1][0] == '-' && b[1][1] == 'h'){
+                  p_usage(b);
+                  return 0;
+            }
             int n_targets = 0;
             char* homedir = getenv("HOME"), ** targets = NULL;
             if(!homedir){
