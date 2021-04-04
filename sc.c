@@ -146,6 +146,7 @@ int main(int a, char** b){
       }
       #else
       if(0){
+      }
       #endif
       else if(a >= 3){
             if(send_clip(b[1], b[2]))fprintf(stderr, "succesfully sent \"%s\" to %s\n", b[2], b[1]);
