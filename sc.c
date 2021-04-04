@@ -68,24 +68,9 @@ void update_cb(int sock, clipboard_c* c){
       /*fprintf(stderr, "FUCK: %i\n", STDIN_FILENO);*/
       while(1){
             if((peer = accept(sock, (struct sockaddr*)&addr, &len)) < 0)continue;
-            char ash[] = "aSher";
-            write(peer, ash, 5);
-            /*fprintf(stderr, "trying to send to socket %i\n"*/
-            fprintf(stderr, "local sock: %i, new peer on socket %i\n", sock, peer);
-            /*fprintf(stderr, "raw read ret: %i\n", (int) recv(peer, &n_bytes, sizeof(int), 0));*/
-            /*fprintf(stderr, "raw read ret: %i\n", (int)read(peer, &n_bytes, sizeof(int)));*/
-            fprintf(stderr, "raw read ret: %i\n", (int)read(sock, &n_bytes, sizeof(int)));
-            /*perror("read()");*/
-            /*fprintf(stderr, "trying to read %i bytes\n", read_int(peer));*/
-            fprintf(stderr, "trying to read %i bytes\n", n_bytes);
-            /*
-             *FILE* fp = fdopen(peer, "rb");
-             *int sz = (int)fread(&n_bytes, 4, 1, fp);
-             */
-            /*if(read(peer, &n_bytes, sizeof(int)) != sizeof(int))continue;*/
 
             int sz = (read(peer, &n_bytes, sizeof(int)));
-            fprintf(stderr, "reading %i, %i bytes\n", sz, n_bytes);
+            /*fprintf(stderr, "reading %i, %i bytes\n", sz, n_bytes);*/
             char* buf = malloc(n_bytes+1);
 
             int cc;
@@ -123,9 +108,11 @@ _Bool send_clip(char* ip, char* str){
 
       fprintf(stderr, "connect returned %i\n", connect(sock, (struct sockaddr*)&addr, sizeof(struct sockaddr_in)));
 
-      char ash[6] = {0};
-      fprintf(stderr, "was able to read %zi bytes\n", read(sock, ash, 5));
-      fprintf(stderr, "read %s\n", ash);
+      /*char ash[6] = {0};*/
+      /*
+       *fprintf(stderr, "was able to read %zi bytes\n", read(sock, ash, 5));
+       *fprintf(stderr, "read %s\n", ash);
+       */
       
       int len = strlen(str);
       int written = write(sock, &len, sizeof(int));
