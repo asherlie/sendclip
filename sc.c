@@ -252,6 +252,7 @@ int main(int a, char** b){
                   }
                   else printf("failed to send to %s\n", targets[i]);
             }
+            if(!n_targets)puts("at least one recipient must be specified, either in a config file, or as a stdin argument");
             free(targets);
       }
       else p_usage(b);
