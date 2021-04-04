@@ -170,17 +170,17 @@ _Bool send_clip(char* ip, char* str){
 
 char** parse_cfg_file(char* fn, int* sz){
       FILE* fp = fopen(fn, "r");
-      if(!fp)return NULL;
       int cap = 1;
-      char** ret = malloc(sizeof(char*)*cap);
+      char** ret = malloc(sizeof(char*)*(cap+1));
+      *sz = 0;
+      if(!fp)return ret;
       char* ln = NULL;
       size_t lncap = 0;
-      *sz = 0;
       ssize_t llen;
       while((llen = getline(&ln, &lncap, fp)) != -1){
             if(*sz > cap){
                   cap *= 2;
-                  char** tmp = malloc(sizeof(char*)*cap);
+                  char** tmp = malloc(sizeof(char*)*(cap+1));
                   memcpy(tmp, ret, sizeof(char*)*(*sz));
                   free(ret);
                   ret = tmp;
@@ -188,7 +188,8 @@ char** parse_cfg_file(char* fn, int* sz){
             /* overwriting \n */
             ln[llen-1] = 0;
             puts(ln);
-            ret[(*sz)++] = ln;
+            /* writing one past leaving room in [0] */
+            ret[((*sz)++)+1] = ln;
             ln = NULL;
       }
       fclose(fp);
@@ -197,13 +198,6 @@ char** parse_cfg_file(char* fn, int* sz){
 
 /*writing code to use a config file that specifies a list of ip addresses*/
 int main(int a, char** b){
-      int xx;
-      char* homedir = getenv("HOME");
-      if(homedir){
-            char cfgpath[50] = {0};
-            sprintf(cfgpath, "%s/%s", homedir, CONFIG_FILE);
-            printf("ret: %p\n", (void*)parse_cfg_file(cfgpath, &xx));
-      }
       #ifdef MAC_OS
       if(a == 1){
             clipboard_c* c = (clip = clipboard_new(NULL));
@@ -214,8 +208,26 @@ int main(int a, char** b){
       if(0){
       }
       #endif
-      else if(a >= 3){
-            if(send_clip(b[1], b[2])){
+      else if(a > 1){
+            int n_targets;
+            char* homedir = getenv("HOME"), ** targets = NULL;
+            if(!homedir){
+                  puts("no HOME directory is set");
+                  if(a <= 2){
+                        puts("please provide a recipient");
+                        return 1;
+                  }
+                  /*targets = malloc(sizeof(char*));*/
+                  n_targets = 0;
+                  targets = &b[2];
+            }
+            else{
+                  char cfgpath[50] = {0};
+                  sprintf(cfgpath, "%s/%s", homedir, CONFIG_FILE);
+                  targets = parse_cfg_file(cfgpath, &n_targets);
+            }
+            /* first send to b[2] if it exists */
+            if(a > 2 && send_clip(b[1], b[2])){
                   printf("succesfully sent ");
                   p_long_str(b[2]);
                   printf(" to %s\n", b[1]);
