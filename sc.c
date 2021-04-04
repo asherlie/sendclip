@@ -126,7 +126,7 @@ _Bool send_clip(char* ip, char* str){
       written += write(sock, str, len);
       fprintf(stderr, "wrote %i/%i\n", written, 4+len);
       usleep(1000000);
-      return written == sizeof(int)+len;
+      return written == (int)sizeof(int)+len;
 }
 
 int main(int a, char** b){
