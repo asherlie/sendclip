@@ -153,32 +153,11 @@ _Bool send_clip(char* ip, char* str){
       return written == (int)sizeof(int)+len;
 }
 
-void zp_long_str(char* str){
-      int len = strlen(str);
-      if(len > 500){
-            char tmp = str[199];
-            str[199] = 0;
-
-
-            /*printf("succesfully sent \"%s...%s\" to %s\n", );*/
-            printf("\"%s...", str);
-            str[199] = tmp;
-            printf("%s\"", str+len-200);
-      }
-      else printf("\"%s\"", str);
-}
-
-
 int main(int a, char** b){
       /*
        *close(STDIN_FILENO);
        *close(STDOUT_FILENO);
        */
-/*int main(){*/
-
-      // ./sc <ip> <msg>
-      // ./sc
-
       #ifdef MAC_OS
       if(a == 1){
             clipboard_c* c = clipboard_new(NULL);
