@@ -5,6 +5,11 @@
 #include <sys/socket.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <pthread.h>
+
+#define OPTIMIZED
+
+#include "pooler/pool.h"
 
 #define PORT 12
 
@@ -169,12 +174,29 @@ _Bool send_clip(char* ip, char* str){
       return written == (int)sizeof(int)+len;
 }
 
+struct send_clip_arg{
+    char* ip, * str;
+};
+
+volatile void* send_clip_vv(void* v_sca){
+    struct send_clip_arg* sca = v_sca;
+    if(send_clip(sca->ip, sca->str)){
+        printf("succesfully sent ");
+        p_long_str(sca->str);
+        printf(" to %s\n", sca->ip);
+    }
+    else printf("failed to send to %s\n", sca->ip);
+    free(sca->ip);
+    free(sca);
+    return NULL;
+}
+
 #define CONFIG_FILE ".sendclip"
 
 char** parse_cfg_file(char* fn, int* sz){
       FILE* fp = fopen(fn, "r");
       int cap = 1;
-      char** ret = malloc(sizeof(char*)*(cap));
+      char** ret = malloc(sizeof(char*)*(cap+1));
       *sz = 0;
       if(!fp)return ret;
       char* ln = NULL;
@@ -195,6 +217,7 @@ char** parse_cfg_file(char* fn, int* sz){
             ret[((*sz)++)] = ln;
             ln = NULL;
       }
+      free(ln);
       fclose(fp);
       return ret;
 }
@@ -242,18 +265,59 @@ int main(int a, char** b){
                   targets = parse_cfg_file(cfgpath, &n_targets);
 
                   /* append stdin recipient to targets, there's a guaranteed space for it */
-                  if(a > 2)targets[n_targets++] = b[2];
+                  /* done just to simplify logic of freeing targets */
+                  if(a > 2)targets[n_targets++] = strdup(b[2]);
             }
+            /*
+             * maybe use my threadpool library and just initialize n_targets threads
+             * or just create that many threads right now and one at a time spool 'em up
+            */
+        
+            /*start_pool(n_targets%50);*/
+            struct thread_pool tp;
+            init_pool(&tp, (n_targets > 50) ? 50 : n_targets);
+
+            set_await_target(&tp, n_targets);
+
             for(int i = 0; i < n_targets; ++i){
-                  if(send_clip(targets[i], b[1])){
-                        printf("succesfully sent ");
-                        p_long_str(b[1]);
-                        printf(" to %s\n", targets[i]);
-                  }
-                  else printf("failed to send to %s\n", targets[i]);
+                  #ifdef OPTIMIZED
+                  struct send_clip_arg* sca = malloc(sizeof(struct send_clip_arg));
+                  sca->ip = targets[i];
+                  sca->str = b[1];
+                  /*exec_pool(send_clip_vv, sca);*/
+                  exec_routine(&tp, send_clip_vv, sca);
+                  #else
+                   if(send_clip(targets[i], b[1])){
+                         printf("succesfully sent ");
+                         p_long_str(b[1]);
+                         printf(" to %s\n", targets[i]);
+                   }
+                   else printf("failed to send to %s\n", targets[i]);
+                   printf("freeing targets[%i]\n", i);
+                   free(targets[i]);
+                   #endif
             }
+
+            #ifdef OPTIMIZED
+            await(&tp);
+            /*pthread_cond_wait();*/
+            /*usleep(10000);*/
+            /*while(!is_complete(&tp))usleep(1000);*/
+            #endif
+
+            /*
+             * create a new peerpool function _Bool isdone()
+             * that just returns whether or not there are any more routines set to be run in the queue
+             * we can sleep until this returns true
+             * or we can use a pthread_cond_t probably
+             * while(tp.rq.
+            */
+
+
             if(!n_targets)puts("at least one recipient must be specified, either in a config file, or as a stdin argument");
             free(targets);
+
+            destroy_pool(&tp);
       }
       else p_usage(b);
 
