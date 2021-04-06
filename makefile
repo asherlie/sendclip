@@ -13,7 +13,9 @@ CC=gcc
 
 all: sc
 
-pooler/pool.o: pooler/pool.c
+pooler/pool.o: pooler/pool.c pooler/pool.h
+	$(CC) $(BASEFLAGS) pooler/pool.c -c -o pooler/pool.o
+
 sc: sc.c pooler/pool.o
 
 .PHONY:
