@@ -245,7 +245,7 @@ int main(int a, char** b){
                   if(a > 2)targets[n_targets++] = strdup(b[2]);
             }
             /* TODO: if less than n targets, send individually without the overhead of spawning threads */
-            _Bool TP = 0;
+            _Bool TP = 1;
             struct thread_pool tp;
             if(TP){
                 /*struct thread_pool tp;*/
