@@ -21,7 +21,7 @@ on linux, for example, i have set up a keyboard
 shortcut for `shift-alt-quotation_mark` in my window
 manager config to call a shell script containing the
 following: `~/sendclip/sc "$(xsel)"`
-each time the shift-alt-quotation_mark is pressed, any
+each time shift-alt-quotation_mark is pressed, any
 selected text on screen is sent to all IP addresses
 listed in $HOME/.sendclip
 
@@ -32,6 +32,8 @@ shell script` - the shell script i have used is:
 i then, similarly to in linux, set up a keyboard
 shortcut for `shift-command-quotation_mark` to run
 this automator service
+
+sendclip behavior using these two methods is identical
 
 NOTE: <required>, {optional}
 usage:
