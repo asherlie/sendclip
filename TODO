@@ -1,2 +1,4 @@
 shorten timeout for sending
 use SO_REUSEPORT
+
+add README that outlines using automator on mac os as well as setting up linux shortcut
