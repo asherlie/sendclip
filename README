@@ -11,8 +11,8 @@ sendclip depends on github.com/jtanx's incredible
 libclipboard, as well as my pooler library for
 threadpool support
 
-sendclip becomes a very powerful tool when set up to
-be called with arbitrary selected text as its argument
+sendclip becomes a very powerful tool when set up to be
+called with arbitrary selected text as its argument
 when a keyboard shortcut is pressed
 this creates an easy to use, very fast way to send
 text to other computers
@@ -30,10 +30,12 @@ on mac os, i have set up an automator service to
 shell script` - the shell script i have used is:
     `~/sendclip/sc "$1"`
 i then, similarly to in linux, set up a keyboard
-shortcut for `shift-command-quotation_mark` to run
-this automator service
+shortcut for `shift-command-quotation_mark` to run this
+automator service
 
 sendclip behavior using these two methods is identical
+
+sendclip can be safely exited using CTRL-C
 
 NOTE: <required>, {optional}
 usage:

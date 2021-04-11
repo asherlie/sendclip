@@ -140,6 +140,11 @@ _Bool send_clip(char* ip, char* str){
        */
       
       int len = strlen(str);
+
+      /* mac OS sometimes add a newline at the end
+       * of selected text
+       */
+      if(str[len-1] == '\n')--len;
       int written = write(sock, &len, sizeof(int));
       if(written < 0)perror("write()");
       written += write(sock, str, len);
