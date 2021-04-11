@@ -7,8 +7,6 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
-#define OPTIMIZED
-
 #include "pooler/pool.h"
 
 #define PORT 12
@@ -61,28 +59,6 @@ int create_sock(_Bool list, _Bool alt_port){
 
 
       return sock;
-}
-
-int read_int(int sock){
-      int ret = 0, br = 0, tmp;
-      /* timeout */
-      /*char rret[4];*/
-      for(int i = 0; i < 1000; ++i){
-            /*tmp = read(sock, ((char*)&ret)+br, 4-br);*/
-            tmp = read(sock, ((char*)&ret)+(4-br), 4-br);
-            /*tmp = read(sock, rret+br, 4-br);*/
-            /*if(tmp < 0)continue;*/
-            if(tmp < 0){
-                  perror("read()");
-                  return -1;
-            }
-            br += tmp;
-            printf("read %i bytes, total %i\n", tmp, br);
-            if(br == sizeof(int))break;
-            usleep(100);
-      }
-      /*printf("%i, %i, %i, %i\n", rret[0], rret[1], rret[2], rret[3]);*/
-      return ret;
 }
 
 void update_cb(int sock, clipboard_c* c){
@@ -268,25 +244,53 @@ int main(int a, char** b){
                   /* done just to simplify logic of freeing targets */
                   if(a > 2)targets[n_targets++] = strdup(b[2]);
             }
+            /* TODO: if less than n targets, send individually without the overhead of spawning threads */
+            _Bool TP = 0;
             struct thread_pool tp;
-            init_pool(&tp, (n_targets > 50) ? 50 : n_targets);
+            if(TP){
+                /*struct thread_pool tp;*/
+                init_pool(&tp, (n_targets > 50) ? 50 : n_targets);
 
-            set_await_target(&tp, n_targets);
-
-            for(int i = 0; i < n_targets; ++i){
-                  struct send_clip_arg* sca = malloc(sizeof(struct send_clip_arg));
-                  sca->ip = targets[i];
-                  sca->str = b[1];
-                  /*exec_pool(send_clip_vv, sca);*/
-                  exec_routine(&tp, send_clip_vv, sca);
+                set_await_target(&tp, n_targets);
             }
 
-            await(&tp);
+            for(int i = 0; i < n_targets; ++i){
+                  if(TP){
+                      struct send_clip_arg* sca = malloc(sizeof(struct send_clip_arg));
+                      sca->ip = targets[i];
+                      sca->str = b[1];
+                      /*exec_pool(send_clip_vv, sca);*/
+                      exec_routine(&tp, send_clip_vv, sca);
+                  }
+                  #if 0
+                  if less than n targets, send individually without the overhead of spawning threads
+                  if(send_clip(targets[i], b[1])){
+                        printf("succesfully sent ");
+                        p_long_str(b[1]);
+                        printf(" to %s\n", targets[i]);
+                  }
+                  else printf("failed to send to %s\n", targets[i]);
+                  printf("freeing targets[%i]\n", i);
+                  free(targets[i]);
+                  #endif
+                  else{
+                      if(send_clip(targets[i], b[1])){
+                            printf("succesfully sent ");
+                            p_long_str(b[1]);
+                            printf(" to %s\n", targets[i]);
+                      }
+                      else printf("failed to send to %s\n", targets[i]);
+                      /*printf("freeing targets[%i]\n", i);*/
+                      free(targets[i]);
+                  }
+            }
+
+            if(TP)await(&tp);
 
             if(!n_targets)puts("at least one recipient must be specified, either in a config file, or as a stdin argument");
             free(targets);
 
-            destroy_pool(&tp);
+            if(TP)destroy_pool(&tp);
       }
       else p_usage(b);
 
