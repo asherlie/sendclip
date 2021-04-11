@@ -262,17 +262,6 @@ int main(int a, char** b){
                       /*exec_pool(send_clip_vv, sca);*/
                       exec_routine(&tp, send_clip_vv, sca);
                   }
-                  #if 0
-                  if less than n targets, send individually without the overhead of spawning threads
-                  if(send_clip(targets[i], b[1])){
-                        printf("succesfully sent ");
-                        p_long_str(b[1]);
-                        printf(" to %s\n", targets[i]);
-                  }
-                  else printf("failed to send to %s\n", targets[i]);
-                  printf("freeing targets[%i]\n", i);
-                  free(targets[i]);
-                  #endif
                   else{
                       if(send_clip(targets[i], b[1])){
                             printf("succesfully sent ");
