@@ -11,6 +11,28 @@ sendclip depends on github.com/jtanx's incredible
 libclipboard, as well as my pooler library for
 threadpool support
 
+sendclip becomes a very powerful tool when set up to
+be called with arbitrary selected text as its argument
+when a keyboard shortcut is pressed
+this creates an easy to use, very fast way to send
+text to other computers
+
+on linux, for example, i have set up a keyboard
+shortcut for `shift-alt-quotation_mark` in my window
+manager config to call a shell script containing the
+following: `~/sendclip/sc "$(xsel)"`
+each time the shift-alt-quotation_mark is pressed, any
+selected text on screen is sent to all IP addresses
+listed in $HOME/.sendclip
+
+on mac os, i have set up an automator service to
+`receive selected text` in `any application` and `run
+shell script` - the shell script i have used is:
+    `~/sendclip/sc "$1"`
+i then, similarly to in linux, set up a keyboard
+shortcut for `shift-command-quotation_mark` to run
+this automator service
+
 NOTE: <required>, {optional}
 usage:
   ./sc <text> {ip} - send <text> to {ip}'s clipboard
