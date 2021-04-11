@@ -1,0 +1,18 @@
+sendclip allows users to send text directly to the
+clipboards of other machines
+
+config file `.sendclip` in the user's home directory
+will be used to specify any number of IP addresses of
+recipients
+if no config file exists, sendclip will only attempt to
+send to the recipient argument
+
+NOTE: <required>, {optional}
+usage:
+  ./sc <text> {ip} - send <text> to {ip}'s clipboard
+                   | as well as all ip addresses set
+                   | in config file
+  ./sc             - await connections
+
+  ./sc -help       - print this usage information
+
