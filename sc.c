@@ -6,6 +6,9 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <pthread.h>
+#include <signal.h>
+
+#include <libclipboard.h>
 
 #include "pooler/pool.h"
 
@@ -26,10 +29,6 @@ void p_long_str(char* str){
       }
       else printf("\"%s\"", str);
 }
-
-#ifdef MAC_OS
-#include <signal.h>
-#include <libclipboard.h>
 
 
 void set_block(int sock){
@@ -99,7 +98,7 @@ void update_cb(int sock, clipboard_c* c){
             printf("set clipboard contents to ");
             p_long_str(buf);
             puts("");
-            clipboard_set_text(c, buf);
+            printf("SUCCY: %i\n",clipboard_set_text(c, buf));
 
             free(buf);
             close(peer);
@@ -117,7 +116,6 @@ void exit_safely(int sig){
       exit(0);
 }
 
-#endif
 _Bool send_clip(char* ip, char* str){
       /*int sock = create_sock(0, 1);*/
       int sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -201,22 +199,17 @@ char** parse_cfg_file(char* fn, int* sz){
 void p_usage(char** b){
       printf("usage:\n  %s <text> {ip} - send <text> to {ip}'s clipboard as well as all ip addresses set in config file"
                    "\n                   | <text> must be provided, {ip} is optional"
-                   "\n  %s             - await connections (mac only)\n"
+                   "\n  %s             - await connections\n"
                    "\n  %s -help       - print this usage information\n", *b, *b, *b);
 }
 
 /*writing code to use a config file that specifies a list of ip addresses*/
 int main(int a, char** b){
-      #ifdef MAC_OS
       if(a == 1){
             clipboard_c* c = (clip = clipboard_new(NULL));
             signal(SIGINT, exit_safely);
             update_cb((lsock = create_sock(1, 0)), c);
       }
-      #else
-      if(0){
-      }
-      #endif
       else if(a > 1){
             if(b[1][0] == '-' && b[1][1] == 'h'){
                   p_usage(b);
