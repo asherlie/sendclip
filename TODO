@@ -1,4 +1,4 @@
+investigate why text sent from mac contains terminating \n
 shorten timeout for sending
 use SO_REUSEPORT
-
-add README that outlines using automator on mac os as well as setting up linux shortcut
+get rid of all DELAYs in pooler
