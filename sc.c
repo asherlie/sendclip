@@ -98,7 +98,7 @@ void update_cb(int sock, clipboard_c* c){
             printf("set clipboard contents to ");
             p_long_str(buf);
             puts("");
-            printf("SUCCY: %i\n",clipboard_set_text(c, buf));
+            clipboard_set_text(c, buf);
 
             free(buf);
             close(peer);
