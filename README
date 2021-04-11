@@ -7,6 +7,10 @@ recipients
 if no config file exists, sendclip will only attempt to
 send to the recipient argument
 
+sendclip depends on github.com/jtanx's incredible
+libclipboard, as well as my pooler library for
+threadpool support
+
 NOTE: <required>, {optional}
 usage:
   ./sc <text> {ip} - send <text> to {ip}'s clipboard
