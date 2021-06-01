@@ -24,4 +24,4 @@ sc: sc.c spool/sp.o
 
 .PHONY:
 clean:
-	rm -f sc *.o
+	rm -f sc *.o */*.o
