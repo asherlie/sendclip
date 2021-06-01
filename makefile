@@ -15,9 +15,6 @@ CC=gcc
 
 all: sc
 
-pooler/pool.o: pooler/pool.c pooler/pool.h
-	$(CC) $(BASEFLAGS) pooler/pool.c -c -o pooler/pool.o
-
 spool/sp.o: spool/sp.c spool/sp.h
 	$(CC) $(BASEFLAGS) spool/sp.c -c -o spool/sp.o
 
