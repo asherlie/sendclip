@@ -10,7 +10,7 @@
 
 #include <libclipboard.h>
 
-#include "pooler/pool.h"
+#include "spool/sp.h"
 
 #define PORT 12
 
@@ -157,7 +157,7 @@ struct send_clip_arg{
     char* ip, * str;
 };
 
-volatile void* send_clip_vv(void* v_sca){
+void* send_clip_vv(void* v_sca){
     struct send_clip_arg* sca = v_sca;
     if(send_clip(sca->ip, sca->str)){
         printf("succesfully sent ");
@@ -244,12 +244,11 @@ int main(int a, char** b){
             }
             /* TODO: if less than n targets, send individually without the overhead of spawning threads */
             _Bool TP = 1;
-            struct thread_pool tp;
+            struct spool_t sp;
             if(TP){
-                /*struct thread_pool tp;*/
-                init_pool(&tp, (n_targets > 50) ? 50 : n_targets);
+                init_spool_t(&sp, (n_targets > 50) ? 50 : n_targets);
 
-                set_await_target(&tp, n_targets);
+                set_routine_target(&sp, n_targets);
             }
 
             for(int i = 0; i < n_targets; ++i){
@@ -258,7 +257,7 @@ int main(int a, char** b){
                       sca->ip = targets[i];
                       sca->str = b[1];
                       /*exec_pool(send_clip_vv, sca);*/
-                      exec_routine(&tp, send_clip_vv, sca);
+                      exec_routine(&sp, send_clip_vv, sca);
                   }
                   else{
                       if(send_clip(targets[i], b[1])){
@@ -272,12 +271,10 @@ int main(int a, char** b){
                   }
             }
 
-            if(TP)await(&tp);
+            if(TP)await_routine_target(&sp);
 
             if(!n_targets)puts("at least one recipient must be specified, either in a config file, or as a stdin argument");
             free(targets);
-
-            if(TP)destroy_pool(&tp);
       }
       else p_usage(b);
 
