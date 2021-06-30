@@ -119,6 +119,7 @@ void exit_safely(int sig){
 _Bool send_clip(char* ip, char* str){
       /*int sock = create_sock(0, 1);*/
       int sock = socket(AF_INET, SOCK_STREAM, 0);
+      int val = 1;
 
       struct sockaddr_in addr;
       memset(&addr, 0, sizeof(struct sockaddr_in));
@@ -127,6 +128,11 @@ _Bool send_clip(char* ip, char* str){
       addr.sin_addr.s_addr = inet_addr(ip);
       addr.sin_family = AF_INET;
       addr.sin_port = PORT;
+
+      /* setting socket to nonblocking
+       * in case IP is unreachable
+       */
+      fcntl(sock, F_SETFL, O_NONBLOCK, &val);
 
       if(connect(sock, (struct sockaddr*)&addr, sizeof(struct sockaddr_in)) == -1){
             return 0;
@@ -256,8 +262,7 @@ int main(int a, char** b){
                       struct send_clip_arg* sca = malloc(sizeof(struct send_clip_arg));
                       sca->ip = targets[i];
                       sca->str = b[1];
-                      /*exec_pool(send_clip_vv, sca);*/
-                      exec_routine(&sp, send_clip_vv, sca);
+                      exec_routine(&sp, send_clip_vv, sca, 0);
                   }
                   else{
                       if(send_clip(targets[i], b[1])){
