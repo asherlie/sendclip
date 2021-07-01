@@ -116,10 +116,41 @@ void exit_safely(int sig){
       exit(0);
 }
 
+struct connect_arg{
+    int sock;
+    struct sockaddr_in* addr;
+
+    int ret;
+    _Atomic _Bool rset;
+};
+
+/*int _connect_th(int sock, struct sockaddr_in* addr){*/
+void* _connect_th(void* v_arg){
+    struct connect_arg* arg = v_arg;
+
+    arg->ret = connect(arg->sock, (struct sockaddr*)arg->addr, sizeof(struct sockaddr_in));
+
+    arg->rset = 1;
+    return NULL;
+}
+
+int connect_timeout(int sock, int timeout, struct sockaddr_in* addr){
+    struct connect_arg arg = {.sock = sock, .addr = addr, .ret = -1, .rset = 0};
+    pthread_t pth;
+    pthread_create(&pth, NULL, _connect_th, &arg);
+
+    usleep(timeout);
+
+    if(!arg.rset)pthread_cancel(pth);
+
+    pthread_join(pth, NULL);
+
+    return arg.ret;
+}
+
 _Bool send_clip(char* ip, char* str){
       /*int sock = create_sock(0, 1);*/
       int sock = socket(AF_INET, SOCK_STREAM, 0);
-      int val = 1;
 
       struct sockaddr_in addr;
       memset(&addr, 0, sizeof(struct sockaddr_in));
@@ -129,12 +160,8 @@ _Bool send_clip(char* ip, char* str){
       addr.sin_family = AF_INET;
       addr.sin_port = PORT;
 
-      /* setting socket to nonblocking
-       * in case IP is unreachable
-       */
-      fcntl(sock, F_SETFL, O_NONBLOCK, &val);
-
-      if(connect(sock, (struct sockaddr*)&addr, sizeof(struct sockaddr_in)) == -1){
+      /*if(connect(sock, (struct sockaddr*)&addr, sizeof(struct sockaddr_in)) == -1){*/
+      if(connect_timeout(sock, 1000, &addr) == -1){
             return 0;
       }
 
@@ -154,7 +181,7 @@ _Bool send_clip(char* ip, char* str){
       int written = write(sock, &len, sizeof(int));
       if(written < 0)perror("write()");
       written += write(sock, str, len);
-      printf("wrote %i/%i\n", written, 4+len);
+      printf("wrote %i/%i bytes to %s\n", written, 4+len, ip);
       usleep(1000000);
       return written == (int)sizeof(int)+len;
 }
@@ -252,7 +279,7 @@ int main(int a, char** b){
             _Bool TP = 1;
             struct spool_t sp;
             if(TP){
-                init_spool_t(&sp, (n_targets > 50) ? 50 : n_targets);
+                init_spool_t(&sp, (n_targets > 25) ? 25 : n_targets);
 
                 set_routine_target(&sp, n_targets);
             }
